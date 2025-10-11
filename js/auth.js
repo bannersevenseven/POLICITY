@@ -1,5 +1,15 @@
 import { supabase } from "./supabase-config.js";
 
+// ✅ 修正：先處理從 Supabase OAuth 回傳的 #callback
+if (window.location.hash.startsWith("#callback")) {
+  // 把 #callback 替換成 Supabase token hash 形式
+  const newUrl =
+    window.location.origin +
+    "/POLICITY/index.html" +
+    window.location.hash.replace("#callback", "");
+  window.location.replace(newUrl);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // ✅ 嘗試取得目前 Session（包含 OAuth 回傳 token）
   const { data: { session } } = await supabase.auth.getSession();
@@ -29,14 +39,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ✅ 尚未登入 → 點擊登入按鈕時執行登入
   document.getElementById("loginBtn").addEventListener("click", async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://bannersevenseven.github.io/POLICITY/index.html"
+        // ⚠️ 關鍵：強制導回完整 POLICITY 路徑
+        redirectTo: "https://bannersevenseven.github.io/POLICITY/#callback"
       }
     });
-    
-    
 
     if (error) {
       console.error("登入錯誤：", error.message);
