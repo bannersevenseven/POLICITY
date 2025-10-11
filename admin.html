@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>政權之城 — 後台管理</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+
+  <script type="module" src="js/supabase-config.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</head>
+<body>
+  <div class="hero" id="pageRoot" style="display:none;">
+    <div class="bg-overlay"></div>
+
+    <div class="logo">
+      <img src="images/logo.png" alt="LOGO">
+    </div>
+
+    <!-- 未登入 -->
+    <div class="cta not-logged-in" id="loginSection">
+      <h1><i class="fa fa-cogs"></i> 後台管理系統</h1>
+      <p>僅限管理員帳號登入</p>
+      <button class="btn main" id="loginBtn"><i class="fa fa-google"></i> 使用 Google 登入</button>
+    </div>
+
+    <!-- 已登入 -->
+    <div class="cta logged-in hidden" id="dashboard">
+      <h2><i class="fa fa-shield"></i> 管理後台</h2>
+      <p>歡迎，<span id="adminName"></span></p>
+      <button class="btn logout" id="logoutBtn"><i class="fa fa-sign-out"></i> 登出</button>
+
+      <div class="admin-panels">
+        <button class="panel-btn" id="tabMissions"><i class="fa fa-bullseye"></i> 任務管理</button>
+        <button class="panel-btn" id="tabParties"><i class="fa fa-flag"></i> 政黨管理</button>
+        <button class="panel-btn" id="tabNews"><i class="fa fa-newspaper-o"></i> 公告管理</button>
+      </div>
+
+      <div id="contentArea" class="content-area">
+        <p>請選擇要管理的項目。</p>
+      </div>
+      
+    </div>
+  </div>
+</body>
+</html>

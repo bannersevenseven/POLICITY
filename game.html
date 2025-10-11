@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>政權之城 POLICITY — 主頁</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <div class="game-container">
+    <!-- 🔝 頂部 -->
+    <header class="topbar">
+      <div class="player-info">
+        <!-- ✅ 自動載入 Google 頭像，不再需要 default-avatar.png -->
+        <img id="playerAvatar" src="" alt="玩家頭像" style="
+          width:60px; height:60px; border-radius:50%; border:2px solid #ccc;
+          object-fit:cover; vertical-align:middle;
+        ">
+      
+        <div>
+          <h2 id="playerName">玩家名稱</h2>
+          <p><i class="fa fa-flag"></i> 政黨：<span id="playerParty">無</span></p>
+        </div>
+      </div>
+      
+      <div class="currency">
+        <i class="fa fa-money"></i>
+        <span id="playerCoin">--</span> POL幣
+      </div>
+      <button id="logoutBtn" class="logout"><i class="fa fa-sign-out"></i> 登出</button>
+    </header>
+
+    <!-- 🧩 主要內容（可切換） -->
+    <main class="main-area">
+      <!-- 🏠 首頁分頁 -->
+      <section id="homeSection" class="page">
+        <h3><i class="fa fa-newspaper-o"></i> 最新公告</h3>
+        <ul id="newsList"><li>載入中...</li></ul>
+      </section>
+
+      <!-- 🏆 排行分頁 -->
+      <section id="rankSection" class="page hidden">
+        <h3><i class="fa fa-trophy"></i> 排行榜</h3>
+        <ol id="rankingList"><li>載入中...</li></ol>
+      </section>
+
+      <!-- 🎯 任務分頁 -->
+      <section id="missionSection" class="page hidden">
+        <h3><i class="fa fa-bullseye"></i> 任務</h3>
+        <ul id="missionList"><li>載入中...</li></ul>
+      </section>
+
+      <!-- 🏛️ 政黨分頁 -->
+      <section id="partySection" class="page hidden">
+        <h3><i class="fa fa-flag"></i> 我的政黨</h3>
+        <div id="myPartyBox" class="section"><p>載入中...</p></div>
+        <h3><i class="fa fa-flag"></i> 所有政黨</h3>
+        <ul id="partyList"></ul>
+      </section>
+    </main>
+
+    <!-- 📱 底部導覽 -->
+    <footer class="bottombar">
+      <button class="nav-btn active" data-page="home"><i class="fa fa-home"></i><span>首頁</span></button>
+      <button class="nav-btn" data-page="mission"><i class="fa fa-bullseye"></i><span>任務</span></button>
+      <button class="nav-btn" data-page="party"><i class="fa fa-flag"></i><span>政黨</span></button>
+      <button class="nav-btn" data-page="rank"><i class="fa fa-trophy"></i><span>排行</span></button>
+    </footer>
+  </div>
+
+  <!-- ✅ 使用新版 JS（含 Google 頭像、自動刷新、無 401） -->
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

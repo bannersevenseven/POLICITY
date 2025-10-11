@@ -1,0 +1,332 @@
+body {
+  margin: 0;
+  font-family: "Noto Sans TC", sans-serif;
+  background: linear-gradient(135deg, #101020, #181840);
+  color: #eee;
+  display: flex;
+  justify-content: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔝 頂部 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(30, 30, 50, 0.85);
+  padding: 10px 16px;
+  border-bottom: 2px solid gold;
+  backdrop-filter: blur(10px);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid gold;
+}
+.currency {
+  color: gold;
+  font-weight: bold;
+}
+.logout {
+  background: #c62828;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.3s;
+}
+.logout:hover {
+  background: #e53935;
+}
+
+/* 📄 分頁內容 */
+.main-area {
+  flex: 1;
+  padding: 20px;
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 區塊樣式 */
+section {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(8px);
+}
+section h3 {
+  color: gold;
+  border-bottom: 1px solid gold;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+/* 列表樣式 */
+ul, ol {
+  padding-left: 16px;
+  list-style: none;
+  margin: 0;
+}
+ul li, ol li {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+ul li:hover, ol li:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+/* 📱 底部導覽 */
+.bottombar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(30, 30, 50, 0.85);
+  border-top: 2px solid gold;
+  padding: 10px 0;
+  position: sticky;
+  bottom: 0;
+}
+.nav-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.nav-btn.active {
+  color: gold;
+}
+.nav-btn i {
+  font-size: 1.2rem;
+}
+.nav-btn:hover {
+  color: gold;
+  transform: scale(1.05);
+}
+
+/* 📱 響應式 */
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  .main-area {
+    padding: 10px;
+  }
+}
+@media (max-width: 480px) {
+  .nav-btn span {
+    display: none;
+  }
+  .nav-btn i {
+    font-size: 1.3rem;
+  }
+  .logout {
+    font-size: 0.8rem;
+  }
+}
+.party-item button.btn.main {
+  background: gold;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.party-item button.btn.main:hover {
+  background: #ffd740;
+  transform: scale(1.05);
+}
+/* =======================================================
+   政黨系統 UI - POLICITY Game Style
+   ======================================================= */
+.party-card, .party-item {
+  background: rgba(30,30,30,0.8);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  color: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  transition: 0.2s ease-in-out;
+}
+.party-card:hover, .party-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.party-item img, .party-card img {
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.party-item button.btn.main {
+  background: linear-gradient(90deg, #ffd700, #ffcc33);
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.party-item button.btn.main:hover {
+  transform: scale(1.05);
+  background: linear-gradient(90deg, #fff176, #ffd54f);
+}
+
+/* 我的政黨框 */
+#myPartyBox {
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  background: rgba(40,40,40,0.7);
+  padding: 12px;
+  margin-bottom: 15px;
+}
+#myPartyBox h4 {
+  margin: 0;
+  font-size: 18px;
+}
+#myPartyBox p {
+  margin: 4px 0;
+  color: #ccc;
+}
+
+/* 所有政黨區 */
+#partyList {
+  list-style: none;
+  padding: 0;
+}
+#partyList li {
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 8px;
+}
+
+/* =======================================================
+   郵件中心 UI
+   ======================================================= */
+.mail-section {
+  padding: 10px;
+  color: white;
+}
+
+.mail-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.mail-tabs .btn.main {
+  background: rgba(60,60,60,0.9);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: white;
+  transition: all 0.2s;
+}
+.mail-tabs .btn.main.active {
+  background: linear-gradient(90deg, #ffd700, #ffcc33);
+  color: #000;
+  font-weight: bold;
+}
+.mail-tabs .btn.main:hover {
+  transform: scale(1.05);
+}
+
+.mail-item {
+  background: rgba(40,40,40,0.8);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+.mail-item b {
+  color: #ffd700;
+  font-size: 16px;
+}
+.mail-item p {
+  color: #ddd;
+  margin: 4px 0 6px;
+}
+.mail-item small {
+  color: #888;
+  font-size: 12px;
+}
+
+/* =======================================================
+   鈴鐺按鈕（郵件通知入口）
+   ======================================================= */
+#mailBell {
+  background: none;
+  border: none;
+  color: #ffd700;
+  font-size: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+#mailBell:hover {
+  transform: scale(1.15);
+  color: #fff;
+}
+#mailBell::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  background: red;
+  border-radius: 50%;
+  display: none; /* 可改成 block 以顯示新郵件紅點 */
+}
+
+/* =======================================================
+   RWD 自適應
+   ======================================================= */
+@media (max-width: 600px) {
+  .party-card, .party-item, .mail-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .mail-tabs {
+    flex-wrap: wrap;
+  }
+  .party-item button.btn.main {
+    margin-top: 6px;
+  }
+}
