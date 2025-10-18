@@ -59,14 +59,33 @@
         <h3><i class="fa fa-flag"></i> 所有政黨</h3>
         <ul id="partyList"></ul>
       </section>
+      <!-- ⚔️ 對戰分頁 -->
+<section id="fightSection" class="page hidden">
+  <h3><i class="fa fa-fighter-jet"></i> 對戰模式</h3>
+
+  <!-- 模式選擇 -->
+  <div id="modeSelect" class="mode-container"></div>
+
+  <!-- 遊戲畫面 -->
+  <div id="gameArea" class="hidden" style="text-align:center;">
+    <canvas id="fightCanvas" width="800" height="450"
+      style="border:2px solid gold; background:black; border-radius:12px;">
+    </canvas>
+    <div style="margin-top:10px;">
+      <button class="btn main" id="backToMode"><i class="fa fa-arrow-left"></i> 返回模式選擇</button>
+    </div>
+  </div>
+</section>
+
     </main>
 
     <!-- 📱 底部導覽 -->
     <footer class="bottombar">
-      <button class="nav-btn active" data-page="home"><i class="fa fa-home"></i><span>首頁</span></button>
       <button class="nav-btn" data-page="mission"><i class="fa fa-bullseye"></i><span>任務</span></button>
       <button class="nav-btn" data-page="party"><i class="fa fa-flag"></i><span>政黨</span></button>
+      <button class="nav-btn active" data-page="home"><i class="fa fa-home"></i><span>首頁</span></button>
       <button class="nav-btn" data-page="rank"><i class="fa fa-trophy"></i><span>排行</span></button>
+      <button class="nav-btn" data-page="fight"><i class="fa fa-fighter-jet"></i><span>對戰</span></button>
     </footer>
   </div>
 
