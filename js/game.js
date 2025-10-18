@@ -247,7 +247,7 @@ async function loadPartyPage() {
             </div>
             ${
               isMine
-                ? `<button class="btn gray" disabled><i class="fa fa-check"></i> 已加入</button>`
+                ? `<button class="btn gray" style="padding:5 10px; border:solid 2px black;border-radius:15px" disabled><i class="fa fa-check"></i> 已加入</button>`
                 : `<button class="btn main join-btn" data-id="${p.id}">
                      <i class="fa fa-plus"></i> 加入
                    </button>`
@@ -635,6 +635,205 @@ async function loadRanking() {
     });
   } catch (err) {}
 }
+// =============================
+// ⚔️ 對戰模式整合版
+// =============================
+window.loadFightPage = loadFightPage;
+
+async function loadFightPage() {
+  const container = document.getElementById("modeSelect");
+  const modes = ["poker", "debate", "monopoly", "election", "conquest"];
+  container.innerHTML = modes
+    .map(
+      (m) => `
+        <div class="mode-card">
+          <h4>${m.toUpperCase()}</h4>
+          <p>點擊開始遊戲</p>
+          <button onclick="startServerGame('${m}')">開始遊戲</button>
+        </div>`
+    )
+    .join("");
+}
+
+async function startServerGame(mode = "poker") {
+  showGameLoader("載入對戰模式...", "images/logo.png"); // 🟡 加這行
+
+  const session = await supabase.auth.getSession();
+  const user = session?.data?.session?.user;
+  if (!user) {
+    hideGameLoader();
+    return alert("請先登入");
+  }
+
+  const { event } = await callEdge("start_fight", { user_id: user.id, mode });
+  hideGameLoader();
+
+  if (!event) return alert("無法開始遊戲");
+  openFullscreenGame(event.id, mode, user.id);
+}
+
+
+async function openFullscreenGame(event_id, mode, user_id) {
+  console.log("🎯 啟動對戰畫面", { event_id, mode, user_id });
+
+  const canvas = document.getElementById("fightCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // 切換顯示區域
+  document.getElementById("modeSelect")?.classList.add("hidden");
+  document.getElementById("gameArea")?.classList.remove("hidden");
+
+  // 全螢幕進入
+  if (canvas.requestFullscreen) await canvas.requestFullscreen();
+
+  // 防止玩家在遊戲中意外關閉頁面
+  window.onbeforeunload = (e) => {
+    e.preventDefault();
+    e.returnValue = "確定要離開遊戲嗎？進度將不會保存。";
+  };
+
+  // 🔄 每 1 秒輪詢一次後端遊戲狀態
+  const loop = setInterval(async () => {
+    try {
+      const result = await callEdge("get_state", { event_id });
+      const state = result?.state;
+
+      if (!state) {
+        drawError(ctx, "⚠️ 無法取得遊戲狀態 (401)");
+        return;
+      }
+
+      // 繪製畫面
+      drawGameCanvas(ctx, state, user_id);
+
+      // ✅ 若遊戲已結束
+      if (state.status === "finished") {
+        clearInterval(loop);
+        window.onbeforeunload = null;
+        if (document.fullscreenElement) await document.exitFullscreen();
+        alert("🎉 對戰結束！");
+        showGameLoader("返回主頁...", "images/logo.png"); // 🟡 新增這行
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
+      
+    } catch (err) {
+      console.error("❌ get_state 錯誤：", err);
+      drawError(ctx, "❌ 連線錯誤，請檢查網路。");
+    }
+  }, 5000);
+}
+
+function drawPokerGame(ctx, state) {
+  ctx.clearRect(0, 0, 800, 450);
+  ctx.fillStyle = "#003300";
+  ctx.fillRect(0, 0, 800, 450);
+
+  // 桌面
+  ctx.fillStyle = "gold";
+  ctx.font = "20px 微軟正黑體";
+  ctx.fillText("政客撲克桌 - 模式：" + state.mode, 20, 30);
+  ctx.fillText("回合：" + (state.effect.turn || "preflop"), 20, 60);
+
+  // BOT 行動
+  if (state.effect.lastBotAction) {
+    ctx.fillStyle = "white";
+    ctx.fillText("AI 政敵行動：" + state.effect.lastBotAction, 20, 100);
+  }
+
+  // 公共牌
+  if (state.effect.community?.length) {
+    ctx.fillText("公共牌：" + state.effect.community.join(" "), 20, 140);
+  }
+
+  // 分數
+  if (state.effect.scores) {
+    ctx.fillText(
+      "分數：" + JSON.stringify(state.effect.scores),
+      20,
+      180
+    );
+  }
+}
+
+
+function drawState(ctx, state) {
+  if (!state) {
+    ctx.clearRect(0, 0, 800, 450);
+    ctx.fillStyle = "red";
+    ctx.font = "20px 微軟正黑體";
+    ctx.fillText("❌ 無法取得遊戲狀態 (401)", 200, 220);
+    return;
+  }
+  ctx.clearRect(0, 0, 800, 450);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 800, 450);
+  ctx.fillStyle = "gold";
+  ctx.font = "24px 微軟正黑體";
+  ctx.fillText(`模式：${state.mode}`, 50, 50);
+  ctx.fillText(`狀態：${state.status}`, 50, 80);
+  if (state.effect?.scores)
+    ctx.fillText(`得分：${JSON.stringify(state.effect.scores)}`, 50, 120);
+}
+
+
+
+
+// =============================
+// 🎮 簡易 Canvas 遊戲範例
+// =============================
+function renderGameCanvas(mode) {
+  const canvas = document.getElementById("fightCanvas");
+  const ctx = canvas.getContext("2d");
+  let t = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景閃爍特效
+    const color = `hsl(${(t % 360)}, 70%, 50%)`;
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20;
+    ctx.font = "48px '微軟正黑體'";
+    ctx.textAlign = "center";
+    ctx.fillText("模式：" + mode, canvas.width / 2, canvas.height / 2 - 30);
+    ctx.font = "24px '微軟正黑體'";
+    ctx.fillText("遊戲進行中...", canvas.width / 2, canvas.height / 2 + 20);
+
+    t += 1;
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+
+
+async function createFight(mode) {
+  const session = await supabase.auth.getSession();
+const token = session?.data?.session?.access_token;
+
+const res = await fetch(
+  "https://qvuekjrwsqdobyzefnda.supabase.co/functions/v1/events?action=get_state",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2dWVranJ3c3Fkb2J5emVmbmRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMDIwNTYsImV4cCI6MjA3NTU3ODA1Nn0.7BIdtTS9cdH-u5FG83wcv7HgD8Ht8i5Amui9ThjROMU",
+
+    },
+    body: JSON.stringify({ event_id }),
+  }
+);
+
+
+  const result = await res.json();
+  if (result.error) return alert("❌ " + result.error);
+  alert(`✅ 已建立 ${mode} 對戰活動`);
+}
+
 
 // =============================
 // 🧭 分頁切換
@@ -652,6 +851,7 @@ function initPageSwitch() {
       btn.classList.add("active");
       if (target === "party") loadPartyPage();
       if (target === "ranking") loadRanking();
+      if (target === "fight") loadFightPage();
     });
   });
 }
@@ -674,6 +874,83 @@ function startAutoRefresh() {
   setInterval(() => loadMissions(true), 15000);
   setInterval(() => loadPartyPage(true), 20000);
 }
+// =====================================
+// 🚀 Supercell 風格載入畫面（全系統整合）
+// =====================================
+
+window.showGameLoader = function (message = "政權之城 POLICITY", logoPath = "images/logo.png") {
+  // 避免重複建立
+  if (document.getElementById("gameLoader")) return;
+
+  const loader = document.createElement("div");
+  loader.id = "gameLoader";
+  Object.assign(loader.style, {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "black",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "column",
+    zIndex: 999999,
+    transition: "opacity 0.8s ease",
+  });
+
+  const logo = document.createElement("img");
+  logo.src = logoPath;
+  Object.assign(logo.style, {
+    width: "220px",
+    opacity: 0,
+    transform: "scale(0.7)",
+    transition: "opacity 1s ease, transform 0.8s ease",
+    filter: "drop-shadow(0 0 20px gold)"
+  });
+
+  const text = document.createElement("div");
+  text.textContent = message;
+  Object.assign(text.style, {
+    color: "white",
+    fontFamily: "微軟正黑體",
+    fontSize: "40px",
+    marginTop: "25px",
+    opacity: 0,
+    transition: "opacity 0.8s ease"
+  });
+
+  loader.appendChild(logo);
+  loader.appendChild(text);
+  document.body.appendChild(loader);
+
+  // LOGO 動畫進場
+  setTimeout(() => {
+    logo.style.opacity = 1;
+    logo.style.transform = "scale(1)";
+  }, 100);
+
+  // 文字淡入
+  setTimeout(() => {
+    text.style.opacity = 1;
+  }, 600);
+};
+
+// ✅ 關閉載入畫面
+window.hideGameLoader = function () {
+  const loader = document.getElementById("gameLoader");
+  if (!loader) return;
+  loader.style.opacity = 0;
+  setTimeout(() => loader.remove(), 900);
+};
+
+// ✅ 頁面初次載入顯示
+showGameLoader("政權之城 POLICITY", "images/logo.png");
+
+window.addEventListener("load", () => {
+  setTimeout(hideGameLoader, 3500);
+});
+
 
 // =============================
 // 🚀 初始化
@@ -687,3 +964,166 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPageSwitch();
   startAutoRefresh();
 });
+
+// ✅ 讓 HTML onclick 能呼叫這些函式
+window.loadFightPage = loadFightPage;
+window.startServerGame = startServerGame;
+async function callEdge(action, body = {}) {
+  const session = await supabase.auth.getSession();
+  const token = session?.data?.session?.access_token;
+
+  if (!token) {
+    console.warn("❌ 無法取得登入 Token");
+    alert("請先登入再進行遊戲！");
+    return {};
+  }
+
+  const res = await fetch(
+    `https://qvuekjrwsqdobyzefnda.supabase.co/functions/v1/events?action=${action}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2dWVranJ3c3Fkb2J5emVmbmRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMDIwNTYsImV4cCI6MjA3NTU3ODA1Nn0.7BIdtTS9cdH-u5FG83wcv7HgD8Ht8i5Amui9ThjROMU"
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  const result = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    console.error(`❌ ${action} 錯誤:`, res.status, result);
+    if (res.status === 401) {
+      alert("登入已失效，請重新登入");
+      await supabase.auth.signOut();
+      window.location.href = "index.html";
+    }
+  }
+
+  return result;
+  // =============================================
+// 🎨 對戰畫面繪製核心
+// =============================================
+function drawGameCanvas(ctx, state, user_id) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  // 背景
+  ctx.fillStyle = "#003300";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  // 標題列
+  ctx.fillStyle = "gold";
+  ctx.font = "22px 微軟正黑體";
+  ctx.fillText(`模式：${state.mode?.toUpperCase() || "未知"}`, 30, 40);
+  ctx.fillText(`狀態：${state.status || "未知"}`, 30, 70);
+
+  // 玩家資料
+  const players = state.effect?.players || [];
+  const scores = state.effect?.scores || {};
+  const community = state.effect?.community || [];
+  const pot = state.effect?.pot ?? 0;
+
+  let y = 120;
+  ctx.font = "18px 微軟正黑體";
+  for (const p of players) {
+    const isBot = p.startsWith("bot-");
+    ctx.fillStyle = isBot ? "deepskyblue" : "white";
+    const label = isBot ? "🤖 政敵AI" : "🧑 玩家";
+    ctx.fillText(`${label} (${p.slice(0, 6)}): ${scores[p] ?? 0} POL`, 50, y);
+    y += 30;
+  }
+
+  // 公共牌
+  if (community.length) {
+    ctx.fillStyle = "yellow";
+    ctx.fillText("公共牌：" + community.join(" "), 50, y + 10);
+    y += 30;
+  }
+
+  // 底池
+  ctx.fillStyle = "orange";
+  ctx.fillText(`底池：${pot} POL幣`, 50, y + 30);
+
+  // BOT 行動顯示
+  const botAction = state.effect?.actions
+    ? Object.entries(state.effect.actions).find(([k]) => k.startsWith("bot-"))
+    : null;
+  if (botAction) {
+    ctx.fillStyle = "aqua";
+    ctx.fillText(`AI 政敵行動：${botAction[1]}`, 50, y + 60);
+  }
+
+  // 倒數時間
+  if (state.effect?.time) {
+    ctx.fillStyle = "lightgray";
+    ctx.fillText(`剩餘時間：${state.effect.time}s`, 50, y + 90);
+  }
+}
+
+// =============================================
+// ❌ 錯誤畫面顯示
+// =============================================
+function drawError(ctx, message) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = "red";
+  ctx.font = "22px 微軟正黑體";
+  ctx.fillText(message, 120, ctx.canvas.height / 2);
+}
+
+}
+
+// 👇 強制讓函式成為全域可存取
+// =============================================
+// ✅ 確保全域可用 (for onclick / interval / server callbacks)
+// =============================================
+window.drawGameCanvas = function (ctx, state, user_id) {
+  if (!ctx || !state) return;
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  // 背景
+  ctx.fillStyle = "#003300";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  // 標題
+  ctx.fillStyle = "gold";
+  ctx.font = "22px 微軟正黑體";
+  ctx.fillText(`模式：${state.mode?.toUpperCase() || "未知"}`, 30, 40);
+  ctx.fillText(`狀態：${state.status || "未知"}`, 30, 70);
+
+  // 玩家分數
+  const scores = state.effect?.scores || {};
+  let y = 120;
+  ctx.fillStyle = "white";
+  ctx.font = "18px 微軟正黑體";
+  for (const uid in scores) {
+    const score = scores[uid];
+    const label = uid === user_id ? "你" : "AI 政敵";
+    ctx.fillText(`${label} 分數：${score}`, 50, y);
+    y += 30;
+  }
+
+  // 時間倒數
+  if (state.effect?.time) {
+    ctx.fillStyle = "lightgray";
+    ctx.fillText(`剩餘時間：${state.effect.time}s`, 50, y + 20);
+  }
+};
+
+window.drawError = function (ctx, message) {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = "red";
+  ctx.font = "22px 微軟正黑體";
+  ctx.fillText(message, 120, ctx.canvas.height / 2);
+};
+
+// ⛔ 同時掛全域給其他遊戲函式
+window.startServerGame = startServerGame;
+window.openFullscreenGame = openFullscreenGame;
+
